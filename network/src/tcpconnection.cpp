@@ -1,9 +1,8 @@
 #include "tcpconnection.h"
 
-void Network::TcpConnection::startRead(const int bufferSize)
+void Network::TcpConnection::startRead()
 {
-	std::vector<int> buffer(bufferSize);
-	const auto boostBuffer = boost::asio::buffer(buffer, bufferSize);
+	const auto boostBuffer = boost::asio::buffer(m_buffer, m_buffer.size());
 	m_socket.async_read_some(boostBuffer,
 		std::bind(&TcpConnection::handleRead, 
 			shared_from_this(), 
@@ -11,7 +10,7 @@ void Network::TcpConnection::startRead(const int bufferSize)
 			boost::asio::placeholders::bytes_transferred));
 }
 
-void Network::TcpConnection::startWrite(const int bufferSize)
+void Network::TcpConnection::startWrite()
 {
 }
 

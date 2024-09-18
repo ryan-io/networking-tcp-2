@@ -31,6 +31,7 @@ namespace Network {
 			return TcpSrvPtr(new TcpServer(context));	// cannot use std::make_shared here
 		}
 
+		void DoRun();
 		void Run();
 		void AcceptHandler(const TcpCntSharedPtr&, const boost::system::error_code&);
 

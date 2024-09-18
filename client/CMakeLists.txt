@@ -2,7 +2,7 @@
 # project specific logic here.
 #
 project(client)
-set(BOOST_ROOT C:/Development/project-libraries/boost_1_86_0)
+set(BOOST_ROOT C:/Development/projects-libraries/boost_1_86_0)
 file(GLOB clientDepend "src/*.cpp" "include/*.h")
 set(CMAKE_CXX_STANDARD 17)    
 find_package(Boost REQUIRED)

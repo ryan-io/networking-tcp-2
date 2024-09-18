@@ -21,15 +21,17 @@ namespace Network {
 		// returns a constant reference to the connection's socket
 		tcp::socket& GetSocket() { return m_socket; }
 
-		void startRead(int);
-		void startWrite(int);
+		void startRead();
+		void startWrite();
 
 	private:
-		explicit TcpConnection(io_context& context) : m_socket(context) {}
+		explicit TcpConnection(io_context& context, const int bufferSize = 1024)
+			: m_socket(context), m_buffer(std::vector<char>(bufferSize)) {}
 
 		void handleRead(const boost::system::error_code& e, size_t transferred);
 		void handleWrite(const boost::system::error_code& e, size_t transferred);
 
 		tcp::socket m_socket;
+		std::vector<char> m_buffer;
 	};
 }

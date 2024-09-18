@@ -9,9 +9,9 @@ include_directories(network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # use '$
 file(GLOB networkSrc "src/*.cpp")
 set(CMAKE_CXX_STANDARD 17)
 add_library(network STATIC ${networkSrc}) # do not include header files, ideally, link via STATIC, not SHARED	
-set(BOOST_ROOT C:/Development/project-libraries/boost_1_86_0)
+set(BOOST_ROOT C:/Development/projects-libraries/boost_1_86_0)
 find_package(Boost REQUIRED)
-include_directories(PUBLIC ${Boost_INCLUDE_DIRS})
+include_directories(PUBLIC ${Boost_INCLUDE_DIRS})  
 
 # libraries require target_include_directors for include and src
 #	this allows us to include the library header files in the project, but will not

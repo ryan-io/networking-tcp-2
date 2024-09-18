@@ -3,7 +3,7 @@
 #
 project(server)
 #each project will also require boost if a library has a dependency on it
-set(BOOST_ROOT C:/Development/project-libraries/boost_1_86_0)
+set(BOOST_ROOT C:/Development/projects-libraries/boost_1_86_0)
 file(GLOB serverDepend "src/*.cpp" "include/*.h")
 find_package(Boost REQUIRED)
 include_directories(PUBLIC ${Boost_INCLUDE_DIRS})
