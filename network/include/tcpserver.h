@@ -1,10 +1,7 @@
 #pragma once
 
-#include <iostream>
 #include <boost/asio.hpp>
 #include "tcpconstants.h"
-#include <optional>
-#include <unordered_set>
 
 /*
  * Socket is merely one endpoint of a two-way communication link. It represents a
@@ -26,43 +23,52 @@ namespace Network
 	using namespace boost::asio;
 	using ip::tcp;
 
+	// requires an acceptor to accept incoming connections
+	// requires an io_context to handle asynchronous operations
 	class TcpServer
 	{
-// requires an acceptor to accept incoming connections
-// requires an io_context to handle asynchronous operations
 	public:
+		// static factory method to create a new TcpServer object
+		// requires the consumer to provide a boost io_context
 		static TcpSrvPtr New (io_context &context);
 
-		void Run ();
-		void Broadcast (std::string &&msg);
-		void HandleConnection (const TcpCntSharedPtr &, const boost::system::error_code &);
+		// enables the server to start accepting connections
+		// if this method is not invoked, no connections will be accepted
+		//		and the server will not be able to broadcast messages
+		void Start ();
 
-		TcpServer (const TcpServer &) = delete;
-		TcpServer (TcpServer &&) = delete;
-		TcpServer &operator=(const TcpServer &) = delete;
-		TcpServer &operator=(TcpServer &&) = delete;
-		~TcpServer () = default;
+		// send a message to all connected clients
+		void Broadcast (std::string &&msg);
+
+	#pragma region Construction/Destruction
+
+		TcpServer (const TcpServer &) = delete;				// delete copy constructor
+		TcpServer (TcpServer &&) = delete;					// delete move constructor
+		TcpServer &operator=(const TcpServer &) = delete;	// delete copy assignment
+		TcpServer &operator=(TcpServer &&) = delete;		// delete move assignment
+
+		// only declare destructor here, implementation is in the cpp file
+		// this is to allow PIMPL idiom to work with unique_ptr and invocation of tcp server destructor
+		~TcpServer ();							
+
+	#pragma endregion
 
 	private:
+		struct TcpServerImpl;	// forward declaration of the implementation (PIMPL)
+		std::unique_ptr<TcpServerImpl> m_impl;	// pointer to the implementation
+
+		// a callback method for when a new connection is established
+		void HandleConnection (const TcpCntSharedPtr &, const boost::system::error_code &);
+
+		// the core function that processes connection loop
+		void DoRun ();
+
 		// initializes the TcpServer with the provided io_context with the default V4 IP version and port 117
 		// we need an acceptor and a context
 		// the acceptor requires the context and a new tcp::endpoint with IP version and port
 		explicit TcpServer (io_context &context);
 
-		void DoRun ();
-
+		// static method for wrapping std::cout
 		static void Log (const char *message);
-
-		std::unordered_set<TcpCntSharedPtr> m_connections{};
-
-		// provides core I/O functionality
-		io_context &m_context;
-
-		// accepts client connections to this server object
-		tcp::acceptor m_acceptor;
-
-		// used as a placeholder for new sockets that are then std::move
-		//	 to the m_connections vector
-		std::optional<tcp::socket> m_socket{};
 	};
 }

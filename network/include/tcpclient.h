@@ -1,7 +1,6 @@
 #pragma once
 
 #include <boost/asio.hpp>
-#include <numeric>
 #include "tcpconstants.h"
 
 namespace Network
@@ -32,4 +31,4 @@ namespace Network
 		tcp::socket m_socket;
 		ip::basic_resolver_results<tcp> m_endpoints;
 	};
-}  // namespace Network
+}  
