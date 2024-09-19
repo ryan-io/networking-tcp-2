@@ -24,7 +24,7 @@ auto Network::TcpServer::Broadcast (std::string &&msg) -> void
 		//connection->Send (std::forward<std::string>(msg));
 	}
 }
-
+ 
 auto Network::TcpServer::DoRun () -> void
 {
 	std::cout << "TcpServer::DoRun\n";

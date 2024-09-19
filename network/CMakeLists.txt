@@ -9,9 +9,9 @@ include_directories(network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # use '$
 file(GLOB networkSrc "src/*.cpp")
 
 if(MSVC)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20")
 else()
-	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD 20)
 endif(MSVC)
 
 add_library(network STATIC ${networkSrc}) # do not include header files, ideally, link via STATIC, not SHARED	
