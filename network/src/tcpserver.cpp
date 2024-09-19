@@ -2,6 +2,11 @@
 
 #include "tcpconnection.h"
 
+Network::TcpSrvPtr Network::TcpServer::New (io_context &context)
+{
+	return TcpSrvPtr (new TcpServer (context));	// cannot use std::make_shared here
+}
+
 void Network::TcpServer::Run ()
 {
 // create a new TcpConnection object
@@ -24,23 +29,25 @@ auto Network::TcpServer::Broadcast (std::string &&msg) -> void
 		//connection->Send (std::forward<std::string>(msg));
 	}
 }
- 
+
 auto Network::TcpServer::DoRun () -> void
 {
-	std::cout << "TcpServer::DoRun\n";
-
 	m_socket.emplace (m_context);		// this is the socket we will be waiting on
 
 	auto connection = static_cast<TcpCntSharedPtr>(TcpConnection::New (std::move (m_socket.value ())));
 
 	// we cast this to a shared_pointer because this connection can/will be cached
 	// at this point, member variable m_socket of 'connection' is a valid socket
-	auto fncBind = std::bind (&TcpServer::AcceptHandler, this, connection,
+	auto fncBind = std::bind (
+		&TcpServer::HandleConnection,
+		this,
+		connection,
 		placeholders::error);
+
 	m_acceptor.async_accept (*m_socket, fncBind);
 }
 
-void Network::TcpServer::AcceptHandler (const TcpCntSharedPtr &connection,
+void Network::TcpServer::HandleConnection (const TcpCntSharedPtr &connection,
 	const boost::system::error_code &e)
 {
 	//m_connections.emplace (connection);		// use of emplace allows constructing in place
@@ -49,6 +56,7 @@ void Network::TcpServer::AcceptHandler (const TcpCntSharedPtr &connection,
 
 	if (!e)
 	{
+		Log ("New connection established");
 		connection->startRead ();
 	}
 
@@ -60,3 +68,6 @@ Network::TcpServer::TcpServer (io_context &context) :
 	m_acceptor (context,
 		tcp::endpoint (tcp::v4 (), DEFAULT_TCP_PORT))
 { }
+
+void Network::TcpServer::Log (const char *message)
+{ std::cout << message << '\n'; }

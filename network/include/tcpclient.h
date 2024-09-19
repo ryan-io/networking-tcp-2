@@ -11,14 +11,13 @@ namespace Network
 
 	struct TcpClient
 	{
-		static TcpClientPtr New (io_context &context)
-		{
-			return TcpClientPtr (new TcpClient (context));
-		}
+		// static factory method for creating a new TcpClient object
+		static TcpClientPtr New (io_context &context);
 
+		// default constructgor
 		~TcpClient () = default;
 
-		void open ();
+		void Open ();
 
 	private:
 		explicit TcpClient (io_context &context) : m_context (context), m_socket (context)

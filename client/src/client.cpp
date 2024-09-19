@@ -6,7 +6,7 @@ namespace App {
 	void Client::Start() const {
 		std::cout << "Starting client...\n";
 
-		m_tcpClient->open();
+		m_tcpClient->Open();
 
 		std::cout << "Client started!\n";
 	}

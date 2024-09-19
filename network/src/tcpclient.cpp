@@ -2,7 +2,12 @@
 
 #include <iostream>
 
-void Network::TcpClient::open() {
+Network::TcpClientPtr Network::TcpClient::New(io_context& context)
+{
+	return TcpClientPtr (new TcpClient (context));
+}
+
+void Network::TcpClient::Open() {
 	if (m_isOpen) {
 		std::cout << "Client is already open\n";
 		return;

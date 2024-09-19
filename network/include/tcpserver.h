@@ -31,14 +31,11 @@ namespace Network
 // requires an acceptor to accept incoming connections
 // requires an io_context to handle asynchronous operations
 	public:
-		static TcpSrvPtr New (io_context &context)
-		{
-			return TcpSrvPtr (new TcpServer (context));	// cannot use std::make_shared here
-		}
+		static TcpSrvPtr New (io_context &context);
 
 		void Run ();
 		void Broadcast (std::string &&msg);
-		void AcceptHandler (const TcpCntSharedPtr &, const boost::system::error_code &);
+		void HandleConnection (const TcpCntSharedPtr &, const boost::system::error_code &);
 
 		TcpServer (const TcpServer &) = delete;
 		TcpServer (TcpServer &&) = delete;
@@ -52,9 +49,9 @@ namespace Network
 		// the acceptor requires the context and a new tcp::endpoint with IP version and port
 		explicit TcpServer (io_context &context);
 
-		static void Log (const char *message) { std::cout << message << '\n'; }
-
 		void DoRun ();
+
+		static void Log (const char *message);
 
 		std::unordered_set<TcpCntSharedPtr> m_connections{};
 
