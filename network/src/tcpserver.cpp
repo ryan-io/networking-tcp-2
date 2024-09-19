@@ -7,9 +7,9 @@
 
 struct Network::TcpServer::TcpServerImpl
 {
-	explicit Network::TcpServer::TcpServerImpl (io_context &context) :
+	explicit Network::TcpServer::TcpServerImpl(io_context &context) :
 		m_context (context),
-		m_acceptor (context, tcp::endpoint (tcp::v4 (), DEFAULT_TCP_PORT))
+		m_acceptor (context, tcp::endpoint(tcp::v4 (), DEFAULT_TCP_PORT))
 	{ }
 
 	// data structure for holding all active connections

@@ -1,7 +1,6 @@
 #pragma once
 
 namespace Network {
-	constexpr int DEFAULT_BUFFER_SIZE = 1024;
 	constexpr char DEFAULT_TCP_PORT_STR[] = "117";
 	constexpr unsigned short DEFAULT_TCP_PORT = 117;	// network ports are 2 bytes, 0 to 65535
 	constexpr char DEFAULT_ADDRESS[] = "127.0.0.1";	// localhost; this line requires C++17
