@@ -11,4 +11,9 @@ include_directories(PUBLIC ${Boost_INCLUDE_DIRS})
 add_executable(server ${serverDepend})
 target_include_directories(server PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # for 'server' include files
 target_link_libraries(server PRIVATE network)
+
+if(MSVC)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+else()
 set(CMAKE_CXX_STANDARD 17)
+endif(MSVC)

@@ -7,7 +7,13 @@ set(Boost_DEBUG 1)
 include_directories(network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # use '${CMAKE_CURRENT_SOURCE_DIR}' for library headers
 
 file(GLOB networkSrc "src/*.cpp")
-set(CMAKE_CXX_STANDARD 17)
+
+if(MSVC)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++17")
+else()
+	set(CMAKE_CXX_STANDARD 17)
+endif(MSVC)
+
 add_library(network STATIC ${networkSrc}) # do not include header files, ideally, link via STATIC, not SHARED	
 set(BOOST_ROOT C:/Development/projects-libraries/boost_1_86_0)
 find_package(Boost REQUIRED)
