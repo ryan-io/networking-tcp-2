@@ -12,6 +12,7 @@ int main(int charv, char** argv) {
 
 		std::this_thread::sleep_for(std::chrono::seconds(DELAY_START));
 		server.Start();
+		context.run ();
 	}
 	catch (std::exception& e) {
 		std::cerr << e.what() << '\n';

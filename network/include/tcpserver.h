@@ -58,10 +58,10 @@ namespace Network
 		std::unique_ptr<TcpServerImpl> m_impl;	// pointer to the implementation
 
 		// a callback method for when a new connection is established
-		void HandleConnection (const TcpCntSharedPtr &, const boost::system::error_code &);
+		void OnConnect (const TcpCntSharedPtr &, const boost::system::error_code &);
 
 		// the core function that processes connection loop
-		void DoRun ();
+		void Loop ();
 
 		// initializes the TcpServer with the provided io_context with the default V4 IP version and port 117
 		// we need an acceptor and a context
