@@ -20,6 +20,9 @@
 
 namespace Network
 {
+	using OnJoined = std::function<void (const TcpCntSharedPtr &)>;
+	using OnLeft = std::function<void (const TcpCntSharedPtr &)>;
+
 	using namespace boost::asio;
 	using ip::tcp;
 
@@ -38,7 +41,10 @@ namespace Network
 		void Start ();
 
 		// send a message to all connected clients
-		void Broadcast (std::string &&msg);
+		void Broadcast (std::string &&msg) const;
+
+		// register a callback for when a client joins
+		void RegisterOnJoin (const OnJoined &onJoined) const;
 
 	#pragma region Construction/Destruction
 
@@ -49,7 +55,7 @@ namespace Network
 
 		// only declare destructor here, implementation is in the cpp file
 		// this is to allow PIMPL idiom to work with unique_ptr and invocation of tcp server destructor
-		~TcpServer ();							
+		~TcpServer ();
 
 	#pragma endregion
 
@@ -57,11 +63,11 @@ namespace Network
 		struct TcpServerImpl;	// forward declaration of the implementation (PIMPL)
 		std::unique_ptr<TcpServerImpl> m_impl;	// pointer to the implementation
 
-		// a callback method for when a new connection is established
-		void OnConnect (const TcpCntSharedPtr &, const boost::system::error_code &);
-
 		// the core function that processes connection loop
 		void Loop ();
+
+		void RelayOnJoin (const TcpCntSharedPtr &) const;
+		void RelayOnLeft (const TcpCntSharedPtr &) const;
 
 		// initializes the TcpServer with the provided io_context with the default V4 IP version and port 117
 		// we need an acceptor and a context

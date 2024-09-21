@@ -8,22 +8,22 @@ namespace Network
 	using namespace boost::asio;
 	using ip::tcp;
 
-	struct TcpClient
+	class TcpClient
 	{
+		using Messaged = std::function<void (const std::string &)>;
+	public:
 		// static factory method for creating a new TcpClient object
 		static TcpClientPtr New (io_context &context);
 
 		// default constructor
-		~TcpClient () = default;
+		~TcpClient ();
 
 		void Open ();
 
 	private:
-		explicit TcpClient (io_context &context);
+		struct TcpClientImpl;
+		std::unique_ptr<TcpClientImpl> m_impl;
 
-		bool m_isOpen = false;
-		io_context &m_context;
-		tcp::socket m_socket;
-		ip::basic_resolver_results<tcp> m_endpoints;
+		explicit TcpClient (io_context &context);
 	};
 }  

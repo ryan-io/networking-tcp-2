@@ -27,6 +27,12 @@ struct Network::TcpServer::TcpServerImpl
 	//	 to the m_connections vector
 	std::optional<tcp::socket> m_socket{};
 
+	/*
+	 * Callbacks for when a client joins, leaves, broadcasts a message, or receives a message
+	 */
+	std::vector<OnJoined> m_onJoined;
+	std::vector<OnLeft> m_onLeft;
+
 	streambuf m_buffer{ DEFAULT_BUFFER_SIZE };
 };
 
@@ -50,12 +56,17 @@ void Network::TcpServer::Start ()
 //	 internally, this method uses std::forward
 // if std::move is not used, the message will be copied
 // due to 'msg' being initialized as a lvalue
-auto Network::TcpServer::Broadcast (std::string &&msg) -> void
+void Network::TcpServer::Broadcast (std::string &&msg) const
 {
 	for (auto &connection : m_impl->m_connections)
 	{
-		//connection->Send (std::forward<std::string>(msg));
+		connection->Post (std::forward <std::string> (msg));
 	}
+}
+
+void Network::TcpServer::RegisterOnJoin (const OnJoined &onJoined) const
+{
+	m_impl->m_onJoined.push_back (onJoined);
 }
 
 auto Network::TcpServer::Loop () -> void
@@ -76,15 +87,53 @@ auto Network::TcpServer::Loop () -> void
 				TcpServerImpl::DEFAULT_BUFFER_SIZE));
 
 			m_impl->m_connections.insert (connection);
+			RelayOnJoin (connection);
+
+			TcpConnection::MessageHandler messagehandler = [this, connection](const std::string &msg)
+				{
+					std::cout << "Received message: " << msg << '\n';
+				};
+
+			TcpConnection::ErrorHandler errorhandler = [this, connection](const boost::system::error_code &e)
+				{
+					std::cerr << "Error: " << e.message () << '\n';
+				};
 
 			if (!ec)
 			{
-				connection->Start ();
-			} 
+				connection->Start (std::move (messagehandler), std::move (errorhandler));
+			}
 
 			this->Loop ();
-
 		});
+}
+
+// invokes all onJoined callbacks
+void Network::TcpServer::RelayOnJoin (const TcpCntSharedPtr &connection) const
+{
+	if (m_impl->m_onJoined.empty ())
+	{
+		return;
+	}
+
+	for (auto &callback : m_impl->m_onJoined)
+	{
+		callback (connection);
+	}
+}
+
+// invokes all onLeft callbacks
+void Network::TcpServer::RelayOnLeft (const TcpCntSharedPtr &connection) const
+{
+	if (m_impl->m_onLeft.empty ())
+	{
+		return;
+	}
+
+	for (auto &callback : m_impl->m_onLeft)
+	{
+		callback (connection);
+	}
 }
 
 Network::TcpServer::~TcpServer () = default;

@@ -6,7 +6,7 @@ namespace Network {
 	constexpr char DEFAULT_ADDRESS[] = "127.0.0.1";	// localhost; this line requires C++17
 
 	struct TcpConnection;
-	struct TcpClient;
+	class TcpClient;
 	class TcpServer;
 
 	using TcpClientPtr = std::unique_ptr<TcpClient>;

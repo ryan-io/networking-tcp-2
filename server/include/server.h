@@ -1,17 +1,25 @@
 #pragma once
 #include "tcpserver.h"
 
-namespace App {
-	class Server {
+namespace App
+{
+	class Server
+	{
 	public:
-		explicit Server(boost::asio::io_context& context) :
-			m_tcpServer(Network::TcpServer::New(context)),
-			m_context(context) {}
+		explicit Server (boost::asio::io_context &context) :
+			m_tcpServer (Network::TcpServer::New (context)),
+			m_context (context)
+		{ }
 
-		void Start() const;
+		void Start () const;
+
+		void RegisterOnJoinCallback (Network::OnJoined &onJoined)
+		{
+			m_tcpServer->RegisterOnJoin (onJoined);
+		}
 
 	private:
 		Network::TcpSrvPtr m_tcpServer;
-		boost::asio::io_context& m_context;
+		boost::asio::io_context &m_context;
 	};
 }

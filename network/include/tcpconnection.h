@@ -13,6 +13,8 @@ namespace Network
 		// requires a socket to communicate between the server and client
 		using Pointer = std::unique_ptr<TcpConnection>;
 		using PointerShr = std::shared_ptr<TcpConnection>;
+		using MessageHandler = std::function<void (const std::string &)>;
+		using ErrorHandler = std::function<void (const boost::system::error_code &)>;
 
 		// creates a new tcp connection from he provided boost::asio::io_context
 		// returns a unique_ptr that can easily be converted to a shared_ptr
@@ -22,8 +24,11 @@ namespace Network
 		// returns a constant reference to the connection's socket
 		tcp::socket &GetSocket () const;
 
+		// returns the derived name for the connection
+		std::string GetName () const;
+
 		// kicks off the read operation and begins a new "listening loop"
-		void Start ();
+		void Start (const MessageHandler &, const ErrorHandler &);
 
 		// post a message to all clients (connections)
 		// this queues the message to be sent asynchronously
@@ -50,6 +55,7 @@ namespace Network
 
 		// sends a message to all clients
 		void AsyncWrite ();
+		void BuildAndSendMessage(std::string &&, size_t transferred);
 
 		// when a message is sent, this function is called
 		// any callbacks subscribed to OnWrite will be called

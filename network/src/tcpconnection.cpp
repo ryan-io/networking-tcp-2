@@ -39,6 +39,9 @@ struct Network::TcpConnection::TcpConnectionImpl
 
 	// queue of messages to be sent to all clients
 	std::queue<std::string> Messages;
+
+	MessageHandler MessageHandler;
+	ErrorHandler ErrorHandler;
 };
 
 Network::TcpConnection::Pointer Network::TcpConnection::New (tcp::socket &&socket, const int bufferSize = TcpConnectionImpl::DEFAULT_BUFFER_SIZE)
@@ -48,19 +51,49 @@ Network::TcpConnection::Pointer Network::TcpConnection::New (tcp::socket &&socke
 
 boost::asio::ip::tcp::socket &Network::TcpConnection::GetSocket () const { return this->m_impl->Socket; }
 
-// starts the async read loop
-void Network::TcpConnection::Start ()
+std::string Network::TcpConnection::GetName () const
 {
-	//std::cout << m_impl->Socket.local_endpoint().address ();
+	return m_impl->Name;
+}
+
+// starts the async read loop
+void Network::TcpConnection::Start (const MessageHandler& mh,const ErrorHandler& eh)
+{
+	m_impl->ErrorHandler = eh;
+	m_impl->MessageHandler = mh;
 	AsyncRead ();
 }
 
 void Network::TcpConnection::Post (std::string &&msg)
 {
+	const bool idle = m_impl->Messages.empty ();	// this check technically delays execution by '1 frame'
 
+	m_impl->Messages.push (std::move (msg));
+
+	if (idle)
+	{
+		AsyncWrite ();
+	}
 }
 
-Network::TcpConnection::~TcpConnection () = default;
+Network::TcpConnection::~TcpConnection ()
+{
+	m_impl->Socket.close ();
+}
+
+void Network::TcpConnection::BuildAndSendMessage(std::string&& prefix, size_t transferred)
+{
+	std::string msg;
+	const auto bytesTransferred = std::to_string (transferred);
+	msg.append (std::move (prefix));
+	msg.append (": ");
+	msg.append (m_impl->Name);
+	msg.append (" - ");
+	msg.append (bytesTransferred);
+	msg.append (" bytes");
+	msg.push_back ('\n');
+	m_impl->MessageHandler (msg);
+}
 
 Network::TcpConnection::TcpConnection (tcp::socket &&socket, int bufferSize)
 {
@@ -84,15 +117,20 @@ void Network::TcpConnection::AsyncRead ()
 void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transferred)
 {
 	// logging
-	std::cout << m_impl->GetName (e) << " - Transferred " << transferred << " bytes" << std::endl;
+	if (m_impl->MessageHandler)
+	{
+		BuildAndSendMessage ("Read", transferred);
+	}
 
 	if (e)
 	{
 		m_impl->Socket.close (e);	// Socket.close can throw an exception; pass 'e' to capture this
-		std::cerr << "Error reading from socket: " << e.message () << std::endl;
-		//error handler
-		// logging
-	
+
+		if (m_impl->ErrorHandler)
+		{
+			m_impl->ErrorHandler (e);
+		}
+
 		return;
 	}
 
@@ -103,14 +141,14 @@ void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transf
 	//m_impl->Buffer.consume (transferred);	rdbuf calls this internally -> it consumes the bytes on the buffer
 	// if we DONT want the bytes to be read, we need to consume manually (do not call rdbuf for persistent)
 
-
 	if (e)
 	{
 		m_impl->Socket.close (e);
-		std::cerr << "Error reading from socket: " << e.message () << std::endl;
 
-		// error handler
-		// logging
+		if (m_impl->ErrorHandler)
+		{
+			m_impl->ErrorHandler (e);
+		}
 
 		return;
 	}
@@ -122,11 +160,47 @@ void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transf
 
 	// kick the loop back off
 	AsyncRead ();
-
 }
 
 void Network::TcpConnection::AsyncWrite ()
-{ }
+{
+	async_write (
+		m_impl->Socket,
+		boost::asio::buffer (m_impl->Messages.front ()),
+		[ptr = shared_from_this ()] // capture a shared pointer to this object
+		(boost::system::error_code e, const size_t transferred)
+		{
+			ptr->OnWrite (e, transferred);
+		}
+	);
+}
 
 void Network::TcpConnection::OnWrite (boost::system::error_code &e, size_t transferred)
-{ }
+{
+	// logging
+	if (m_impl->MessageHandler)
+	{
+		BuildAndSendMessage("Write", transferred);
+	}
+
+	if (e)
+	{
+		m_impl->Socket.close (e);	// Socket.close can throw an exception; pass 'e' to capture this
+
+		if (m_impl->ErrorHandler)
+		{
+			m_impl->ErrorHandler (e);
+		}
+
+		return;
+	}
+
+	// cache/pop the first message in the queue
+	auto msg = m_impl->Messages.front ();
+	m_impl->Messages.pop ();
+
+	if (!m_impl->Messages.empty ())
+	{
+		AsyncWrite ();
+	}
+}
