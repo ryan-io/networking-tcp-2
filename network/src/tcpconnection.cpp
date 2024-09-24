@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <queue>
+#include <boost/thread/thread.hpp>
 
 struct Network::TcpConnection::TcpConnectionImpl
 {
@@ -20,10 +21,7 @@ struct Network::TcpConnection::TcpConnectionImpl
 	std::string GetName (boost::system::error_code &ec) const
 	{
 		std::stringstream namestr;
-		namestr
-			<< Socket.local_endpoint (ec).address ().to_string ()
-			<< ":"
-			<< Socket.local_endpoint (ec).port ();
+		namestr << Socket.remote_endpoint (ec);
 
 		return namestr.str ();
 	}
@@ -57,11 +55,25 @@ std::string Network::TcpConnection::GetName () const
 }
 
 // starts the async read loop
-void Network::TcpConnection::Start (const MessageHandler& mh,const ErrorHandler& eh)
+void Network::TcpConnection::Start (MessageHandler &&msgHndl, ErrorHandler &&errHandl)
 {
-	m_impl->ErrorHandler = eh;
-	m_impl->MessageHandler = mh;
-	AsyncRead ();
+	try
+	{
+		m_impl->ErrorHandler = std::move (errHandl);
+		m_impl->MessageHandler = std::move (msgHndl);
+
+		boost::thread readThread{ [this] () { AsyncRead (); } };
+		boost::thread writeThread{ [this] () { AsyncWrite (); } };
+
+		readThread.join ();
+		writeThread.join ();	
+	}
+	catch (std::exception&)
+	{
+		m_impl->Socket.close ();
+	}
+
+	//AsyncRead ();
 }
 
 void Network::TcpConnection::Post (std::string &&msg)
@@ -81,7 +93,7 @@ Network::TcpConnection::~TcpConnection ()
 	m_impl->Socket.close ();
 }
 
-void Network::TcpConnection::BuildAndSendMessage(std::string&& prefix, size_t transferred)
+void Network::TcpConnection::BuildAndSendMessage (std::string &&prefix, size_t transferred)
 {
 	std::string msg;
 	const auto bytesTransferred = std::to_string (transferred);
@@ -180,7 +192,7 @@ void Network::TcpConnection::OnWrite (boost::system::error_code &e, size_t trans
 	// logging
 	if (m_impl->MessageHandler)
 	{
-		BuildAndSendMessage("Write", transferred);
+		BuildAndSendMessage ("Write", transferred);
 	}
 
 	if (e)

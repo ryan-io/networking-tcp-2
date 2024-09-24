@@ -8,8 +8,9 @@ namespace Network
 	using boost::asio::ip::tcp;		// for verbosity
 
 	// TcpConnection is a class that represents a single connection between two entities (i.e. server & client)
-	struct TcpConnection : std::enable_shared_from_this<TcpConnection>
+	class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 	{
+	public:
 		// requires a socket to communicate between the server and client
 		using Pointer = std::unique_ptr<TcpConnection>;
 		using PointerShr = std::shared_ptr<TcpConnection>;
@@ -28,7 +29,7 @@ namespace Network
 		std::string GetName () const;
 
 		// kicks off the read operation and begins a new "listening loop"
-		void Start (const MessageHandler &, const ErrorHandler &);
+		void Start (MessageHandler &&, ErrorHandler &&);
 
 		// post a message to all clients (connections)
 		// this queues the message to be sent asynchronously

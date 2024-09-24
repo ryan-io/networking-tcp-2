@@ -9,6 +9,8 @@ namespace App {
 		}
 
 		void Start() const;
+		void Stop () const;
+		void Post (std::string &&msg) const;
 
 	private:
 		explicit Client(boost::asio::io_context& context) :
