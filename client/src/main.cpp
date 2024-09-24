@@ -21,10 +21,10 @@ int main (int charv, char **argv)
 		int counter = 0;
 		while (true)
 		{
-			if (counter >= 5)
+			/*if (counter >= 5)
 			{
 				break;
-			}
+			}*/
 
 			std::this_thread::sleep_for (1000ms);	// std::chrono_literals
 			client.Post ("Hello from client!");
@@ -34,7 +34,6 @@ int main (int charv, char **argv)
 
 		client.Stop ();
 		t.join ();
-		//context.run ();
 	}
 	catch (const std::exception &e)
 	{

@@ -25,6 +25,7 @@ struct Network::TcpServer::TcpServerImpl
 
 	// used as a placeholder for new sockets that are then std::move
 	//	 to the m_connections vector
+	// this acts as a sort of dummy socket for the consumer to use
 	std::optional<tcp::socket> Socket{};
 
 	/*
@@ -56,11 +57,11 @@ void Network::TcpServer::Start ()
 //	 internally, this method uses std::forward
 // if std::move is not used, the message will be copied
 // due to 'msg' being initialized as a lvalue
-void Network::TcpServer::Broadcast (std::string &&msg) const
+void Network::TcpServer::Broadcast (const std::string &msg) const
 {
 	for (auto &connection : m_impl->Connections)
 	{
-		connection->Post (std::forward <std::string> (msg));
+		connection->Post (std::remove_reference_t<std::string>(msg));
 	}
 }
 
@@ -69,10 +70,18 @@ void Network::TcpServer::RegisterOnJoin (const OnJoined &onJoined) const
 	m_impl->OnJoined.push_back (onJoined);
 }
 
+void Network::TcpServer::Post(const char* msg) const
+{
+	for (auto &connection : m_impl->Connections)
+	{
+		connection->Post (msg);
+	}
+}
+
 auto Network::TcpServer::Loop () -> void
 {
+	// the intention here is the socket will be std::move'd into the connection object
 	m_impl->Socket.emplace (m_impl->Context);		// this is the socket we will be waiting on
-
 	// a new connection should be created within the acceptor async_accept block
 	//		to ensure the connection remains in scope
 
@@ -95,22 +104,22 @@ auto Network::TcpServer::Loop () -> void
 				};
 
 			// std::weak_ptr for this?
-			TcpConnection::ErrorHandler errorhandler = [this, ptr = std::weak_ptr(connection)]
+			TcpConnection::ErrorHandler errorhandler = [this, ptr = std::weak_ptr (connection)]
 			(const boost::system::error_code &e)
 				{
-					std::cerr << "Error: " << e.what()<< '\n';
+					std::cerr << "Error: " << e.what () << '\n';
 
 					// if our connection is still valid AND m_connections contains it
 					if (const auto ptrLock = ptr.lock (); ptrLock && m_impl->Connections.erase (ptrLock))
 					{
-						std::cout << "Connection " << ptrLock->GetName() << " was closed.\n";
+						std::cout << "Connection " << ptrLock->GetName () << " was closed.\n";
 						RelayOnLeft (ptrLock);
 					}
 				};
 
 			if (!ec)
 			{
-				connection->Start(std::move(messagehandler), std::move(errorhandler));
+				connection->Start (std::move (messagehandler), std::move (errorhandler));
 			}
 
 			this->Loop ();

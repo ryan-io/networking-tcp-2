@@ -18,6 +18,8 @@ namespace App
 			m_tcpServer->RegisterOnJoin (onJoined);
 		}
 
+		void Post(const char* msg);
+
 	private:
 		Network::TcpSrvPtr m_tcpServer;
 		boost::asio::io_context &m_context;

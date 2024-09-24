@@ -41,12 +41,13 @@ namespace Network
 		void Start ();
 
 		// send a message to all connected clients
-		void Broadcast (std::string &&msg) const;
+		void Broadcast (const std::string &msg) const;
 
 		// register a callback for when a client joins
 		void RegisterOnJoin (const OnJoined &onJoined) const;
+		void Post(const char* msg) const;
 
-	#pragma region Construction/Destruction
+#pragma region Construction/Destruction
 
 		TcpServer (const TcpServer &) = delete;				// delete copy constructor
 		TcpServer (TcpServer &&) = delete;					// delete move constructor

@@ -62,13 +62,21 @@ void Network::TcpConnection::Start (MessageHandler &&msgHndl, ErrorHandler &&err
 		m_impl->ErrorHandler = std::move (errHandl);
 		m_impl->MessageHandler = std::move (msgHndl);
 
-		boost::thread readThread{ [this] () { AsyncRead (); } };
-		boost::thread writeThread{ [this] () { AsyncWrite (); } };
+		boost::thread readThread{ [this] ()
+		{
+			std::cout << "Starting read thread" << std::endl;
+			AsyncRead ();
+		} };
+		boost::thread writeThread{ [this] ()
+		{
+				std::cout << "Starting write thread" << std::endl;
+			//AsyncWrite ();
+		} };
 
 		readThread.join ();
-		writeThread.join ();	
+		writeThread.join ();
 	}
-	catch (std::exception&)
+	catch (std::exception &)
 	{
 		m_impl->Socket.close ();
 	}
@@ -97,7 +105,7 @@ void Network::TcpConnection::BuildAndSendMessage (std::string &&prefix, size_t t
 {
 	std::string msg;
 	const auto bytesTransferred = std::to_string (transferred);
-	msg.append (std::move (prefix));
+	msg.append (prefix);
 	msg.append (": ");
 	msg.append (m_impl->Name);
 	msg.append (" - ");
@@ -166,7 +174,7 @@ void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transf
 	}
 
 	// logging
-	std::cout << "Message from " << m_impl->Name << ": " << message.str () << std::endl;
+	std::cout << "Message from " << m_impl->Name << ": " << message.str () << '\n';
 
 	// add message handler
 

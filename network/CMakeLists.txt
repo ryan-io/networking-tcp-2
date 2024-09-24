@@ -7,7 +7,7 @@ set(Boost_DEBUG 1)
 include_directories(network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # use '${CMAKE_CURRENT_SOURCE_DIR}' for library headers
 
 file(GLOB networkSrc "src/*.cpp")
-
+ 
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20")
 else()  
