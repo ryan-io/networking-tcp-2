@@ -7,7 +7,7 @@
 struct Network::TcpClient::TcpClientImpl
 {
 	explicit TcpClientImpl (io_context &context, const TcpLogging *logger = nullptr)
-		: Logger (logger), Context (context), Socket (context) 
+		: Logger (logger), Context (context), Socket (context)
 	{
 		// resolver allows us to determine the address from a hostname
 		auto resolver = tcp::resolver (context);
@@ -109,12 +109,26 @@ void Network::TcpClient::Post (std::string &&message) const
 {
 	if (!IsOpen ())
 	{
-		InternalLogMsg ("Client is now opening...");
-
+		InternalLogErr ("Client needs to be opened before sending messages.");
 		return;
 	}
 
-	//m_impl->Connection->Post (std::move (message));
+	async_write (m_impl->Socket, boost::asio::buffer (message),
+		[this](const boost::system::error_code &error, size_t bytes_transferred)
+		{
+			std::stringstream ss;
+			if (error)
+			{
+				// error handling
+				ss << "Error: " << error.message ();
+				InternalLogErr (ss.str ());
+			}
+			else
+			{
+				ss << "Sent " << bytes_transferred << " bytes.";
+				InternalLogMsg (ss.str ());
+			}
+		});
 }
 
 void Network::TcpClient::SetOpen () const

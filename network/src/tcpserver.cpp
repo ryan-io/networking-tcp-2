@@ -99,13 +99,13 @@ auto Network::TcpServer::Loop () -> void
 			m_impl->Connections.insert (connection);
 			RelayOnJoin (connection);
 
-			TcpConnection::MessageHandler messagehandler = [this, connection](const std::string &msg)
+			TcpConnection::MsgHandler messagehandler = [this, connection](const std::string &msg)
 				{
-					std::cout << connection->GetName () << ": " << msg << '\n';
+					std::cout << connection->GetName () << ": " << msg;
 				};
 
 			// std::weak_ptr for this?
-			TcpConnection::ErrorHandler errorhandler = [this, ptr = std::weak_ptr (connection)]
+			TcpConnection::ErrHandler errorhandler = [this, ptr = std::weak_ptr (connection)]
 			(const boost::system::error_code &e)
 				{
 					std::cerr << "Error: " << e.what () << '\n';

@@ -37,13 +37,13 @@ struct Network::TcpConnection::TcpConnectionImpl
 	// queue of messages to be sent to all clients
 	std::queue<std::string> Messages;
 
-	MessageHandler MessageHandler;
-	ErrorHandler ErrorHandler;
+	MsgHandler MessageHandler;
+	ErrHandler ErrorHandler;
 };
 
-Network::TcpConnection::Pointer Network::TcpConnection::New (tcp::socket &&socket, const int bufferSize = TcpConnectionImpl::DEFAULT_BUFFER_SIZE)
+Network::TcpConnection::TcpCntPtr Network::TcpConnection::New (tcp::socket &&socket, const int bufferSize = TcpConnectionImpl::DEFAULT_BUFFER_SIZE)
 {
-	return Pointer (new TcpConnection (std::move (socket), bufferSize));	// cannot use std::make_shared here
+	return TcpCntPtr (new TcpConnection (std::move (socket), bufferSize));	// cannot use std::make_shared here
 }
 
 boost::asio::ip::tcp::socket &Network::TcpConnection::GetSocket () const { return this->m_impl->Socket; }
@@ -54,7 +54,7 @@ std::string Network::TcpConnection::GetName () const
 }
 
 // starts the async read loop
-void Network::TcpConnection::Start (MessageHandler &&msgHndl, ErrorHandler &&errHandl)
+void Network::TcpConnection::Start (MsgHandler &&msgHndl, ErrHandler &&errHandl)
 {
 	try
 	{
@@ -99,17 +99,8 @@ Network::TcpConnection::~TcpConnection ()
 	m_impl->Socket.close ();
 }
 
-void Network::TcpConnection::BuildAndSendMessage (std::string &&prefix, size_t transferred) const
+void Network::TcpConnection::BuildAndSendMessage (const std::string &msg, size_t transferred) const
 {
-	std::string msg;
-	const auto bytesTransferred = std::to_string (transferred);
-	msg.append (std::move(prefix));
-	msg.append (": ");
-	msg.append (m_impl->Name);
-	msg.append (" - ");
-	msg.append (bytesTransferred);
-	msg.append (" bytes");
-	msg.push_back ('\n');
 	m_impl->MessageHandler (msg);
 }
 
@@ -134,12 +125,6 @@ void Network::TcpConnection::AsyncRead ()
 
 void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transferred)
 {
-	// logging
-	if (m_impl->MessageHandler)
-	{
-		BuildAndSendMessage ("Read", transferred);
-	}
-
 	if (e)
 	{
 		m_impl->Socket.close (e);	// Socket.close can throw an exception; pass 'e' to capture this
@@ -172,9 +157,10 @@ void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transf
 	}
 
 	// logging
-	std::cout << "Message from " << m_impl->Name << ": " << message.str () << '\n';
-
-	// add message handler
+	if (m_impl->MessageHandler)
+	{
+		BuildAndSendMessage (message.str(), transferred);
+	}
 
 	// kick the loop back off
 	AsyncRead ();

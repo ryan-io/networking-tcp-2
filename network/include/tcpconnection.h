@@ -12,15 +12,15 @@ namespace Network
 	{
 	public:
 		// requires a socket to communicate between the server and client
-		using Pointer = std::unique_ptr<TcpConnection>;
-		using PointerShr = std::shared_ptr<TcpConnection>;
-		using MessageHandler = std::function<void (const std::string &)>;
-		using ErrorHandler = std::function<void (const boost::system::error_code &)>;
+		using TcpCntPtr = std::unique_ptr<TcpConnection>;
+		using TcpCntPtrShrd = std::shared_ptr<TcpConnection>;
+		using MsgHandler = std::function<void (const std::string &)>;
+		using ErrHandler = std::function<void (const boost::system::error_code &)>;
 
 		// creates a new tcp connection from he provided boost::asio::io_context
 		// returns a unique_ptr that can easily be converted to a shared_ptr
 		// 'socket' is a rvalue reference to a tcp::socket and should be passed with std::move
-		static Pointer New (tcp::socket &&, int);
+		static TcpCntPtr New (tcp::socket &&, int);
 
 		// returns a constant reference to the connection's socket
 		tcp::socket &GetSocket () const;
@@ -29,7 +29,7 @@ namespace Network
 		std::string GetName () const;
 
 		// kicks off the read operation and begins a new "listening loop"
-		void Start (MessageHandler &&, ErrorHandler &&);
+		void Start (MsgHandler &&, ErrHandler &&);
 
 		// post a message to all clients (connections)
 		// this queues the message to be sent asynchronously
@@ -56,10 +56,12 @@ namespace Network
 
 		// sends a message to all clients
 		void AsyncWrite ();
-		void BuildAndSendMessage(std::string &&, size_t transferred) const;
 
 		// when a message is sent, this function is called
 		// any callbacks subscribed to OnWrite will be called
 		void OnWrite (boost::system::error_code &e, size_t transferred);
+
+		// for invoking any message handler or processing a message before outputting to a stream
+		void BuildAndSendMessage (const std::string &msg, size_t transferred) const;
 	};
 }
