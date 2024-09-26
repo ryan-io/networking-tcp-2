@@ -12,13 +12,14 @@ namespace App
 		{ }
 
 		void Start () const;
+		void Stop () const;
 
-		void RegisterOnJoinCallback (Network::OnJoined &onJoined)
+		void RegisterOnJoinCallback (const Network::OnJoined &onJoined) const
 		{
 			m_tcpServer->RegisterOnJoin (onJoined);
 		}
 
-		void Post(const char* msg) const;
+		void Post(std::string &&msg) const;
 
 	private:
 		Network::TcpSrvPtr m_tcpServer;

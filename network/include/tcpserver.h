@@ -40,12 +40,11 @@ namespace Network
 		//		and the server will not be able to broadcast messages
 		void Start ();
 
-		// send a message to all connected clients
-		void Broadcast (const std::string &msg) const;
+		void Stop() const;
 
 		// register a callback for when a client joins
 		void RegisterOnJoin (const OnJoined &onJoined) const;
-		void Post(const char* msg) const;
+		void Post(std::string&& msg) const;
 
 #pragma region Construction/Destruction
 

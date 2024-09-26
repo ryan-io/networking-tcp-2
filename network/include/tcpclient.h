@@ -18,7 +18,7 @@ namespace Network
 		// default constructor
 		~TcpClient ();
 
-		void Open ();
+		void Open () const;
 		void InternalLogMsg(const std::string&) const;
 		void InternalLogMsg(const char*) const;
 		void InternalLogErr (const std::string &) const;

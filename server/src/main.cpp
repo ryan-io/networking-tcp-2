@@ -11,29 +11,36 @@ int main (int charv, char **argv)
 		constexpr int DELAY_START = 2;
 		std::cout << "Creating server...\n";
 		io_context context;
-		io_context localContext;
-		App::Server server{ context };
+		const App::Server server{ context };
 		std::this_thread::sleep_for (std::chrono::seconds (DELAY_START));
 
 		std::thread t ([&]
 			{
-				Network::OnJoined callback = [ ](const Network::TcpCntSharedPtr &connection)
+				const Network::OnJoined callback = [ ](const Network::TcpCntSharedPtr &connection)
 					{
 						std::cout << "Client joined: " << connection->GetName () << '\n';
 					};
 
 				server.RegisterOnJoinCallback (callback);
 				server.Start ();
-
-				context.run ();
 			});
 
-		deadline_timer timer (localContext , boost::posix_time::seconds (5));
-		timer.async_wait ([&server ](boost::system::error_code e) { server.Post ("Message sent from server."); });
+		while (true)
+		{
+			std::string buffer;
+			std::getline (std::cin, buffer);	//this is blocking until return key is pressed	
 
-		// the next two lines are analogous to thread.join ()
-		localContext.run ();
-		context.run ();
+			if (buffer == "\\q")
+			{
+				break;
+			}
+
+			buffer += "\n";
+			server.Post (std::move(buffer));
+		}
+
+		server.Start ();
+		t.join ();
 	}
 	catch (std::exception &e)
 	{

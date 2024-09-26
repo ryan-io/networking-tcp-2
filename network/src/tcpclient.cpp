@@ -29,7 +29,7 @@ Network::TcpClientPtr Network::TcpClient::New (io_context &context)
 	return TcpClientPtr (new TcpClient (context));
 }
 
-void Network::TcpClient::Open ()
+void Network::TcpClient::Open () const
 {
 	if (IsOpen ())
 	{

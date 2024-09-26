@@ -99,11 +99,11 @@ Network::TcpConnection::~TcpConnection ()
 	m_impl->Socket.close ();
 }
 
-void Network::TcpConnection::BuildAndSendMessage (std::string &&prefix, size_t transferred)
+void Network::TcpConnection::BuildAndSendMessage (std::string &&prefix, size_t transferred) const
 {
 	std::string msg;
 	const auto bytesTransferred = std::to_string (transferred);
-	msg.append (prefix);
+	msg.append (std::move(prefix));
 	msg.append (": ");
 	msg.append (m_impl->Name);
 	msg.append (" - ");

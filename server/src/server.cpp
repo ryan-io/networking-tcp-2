@@ -1,13 +1,15 @@
 #include "server.h"
 
-#include <iostream>
-
 void App::Server::Start() const {
 	m_tcpServer->Start();
-	m_context.run();
 }
 
-void App::Server::Post(const char* msg) const
+void App::Server::Stop() const
 {
-	m_tcpServer->Post (msg);
+	m_tcpServer->Stop ();
+}
+
+void App::Server::Post(std::string&& msg) const
+{
+	m_tcpServer->Post (std::move(msg));
 }

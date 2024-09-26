@@ -56,7 +56,7 @@ namespace Network
 
 		// sends a message to all clients
 		void AsyncWrite ();
-		void BuildAndSendMessage(std::string &&, size_t transferred);
+		void BuildAndSendMessage(std::string &&, size_t transferred) const;
 
 		// when a message is sent, this function is called
 		// any callbacks subscribed to OnWrite will be called

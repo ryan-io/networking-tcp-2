@@ -50,19 +50,14 @@ void Network::TcpServer::Start ()
 	Log ("Starting Tcp server...");
 	Loop ();
 	Log ("Tcp server now accepting connections");
+	m_impl->Context.run ();
 }
 
-// broadcast a message to all connected clients
-// should be invoked with a rvalue (std::move)
-//	 internally, this method uses std::forward
-// if std::move is not used, the message will be copied
-// due to 'msg' being initialized as a lvalue
-void Network::TcpServer::Broadcast (const std::string &msg) const
+void Network::TcpServer::Stop () const
 {
-	for (auto &connection : m_impl->Connections)
-	{
-		connection->Post (std::remove_reference_t<std::string>(msg));
-	}
+	Log ("Stopping Tcp server...");
+	m_impl->Context.stop ();
+
 }
 
 void Network::TcpServer::RegisterOnJoin (const OnJoined &onJoined) const
@@ -70,11 +65,17 @@ void Network::TcpServer::RegisterOnJoin (const OnJoined &onJoined) const
 	m_impl->OnJoined.push_back (onJoined);
 }
 
-void Network::TcpServer::Post(const char* msg) const
+// broadcast a message to all connected clients
+// should be invoked with a rvalue (std::move)
+//	 internally, this method uses std::forward
+// if std::move is not used, the message will be copied
+// due to 'msg' being initialized as a lvalue
+void Network::TcpServer::Post (std::string &&msg) const
 {
 	for (auto &connection : m_impl->Connections)
 	{
-		connection->Post (msg);
+		const auto msgSend = std::move (msg);
+		connection->Post (static_cast<std::string>(std::move (msgSend)));
 	}
 }
 
@@ -100,7 +101,7 @@ auto Network::TcpServer::Loop () -> void
 
 			TcpConnection::MessageHandler messagehandler = [this, connection](const std::string &msg)
 				{
-					std::cout << connection->GetName() << ": " << msg << '\n';
+					std::cout << connection->GetName () << ": " << msg << '\n';
 				};
 
 			// std::weak_ptr for this?
