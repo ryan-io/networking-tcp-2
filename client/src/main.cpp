@@ -3,9 +3,8 @@
 #include "tcpclient.h"
 
 int main (int charv, char **argv)
-{  
+{
 	using namespace std::chrono_literals;
-
 
 	try
 	{
@@ -13,14 +12,7 @@ int main (int charv, char **argv)
 		// that contain the host address and port number to connect to.
 		const auto client = Network::TcpClient::New ("127.0.0.1", "117");
 		std::cout << "Client started!\n";
-
-		// new thread for client to read/write messages
-		std::thread t{
-			[&client] ()
-			{
-				client->Open ();
-			}
-		};
+		auto clientThread = client->OpenThread ();
 
 		while (true)
 		{
@@ -33,11 +25,13 @@ int main (int charv, char **argv)
 			}
 
 			buffer += "\n";
-			client->Post (std::move (buffer));
+			client->Post (std::move (buffer));	// callback
+			buffer.clear ();
+			std::cin.clear ();
 		}
 
 		client->Close ();
-		t.join ();
+		clientThread.join ();
 	}
 	catch (const std::exception &e)
 	{

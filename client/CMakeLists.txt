@@ -8,7 +8,7 @@ find_package(Boost COMPONENTS thread REQUIRED)
 include_directories(PUBLIC ${Boost_INCLUDE_DIRS})
 add_executable(client ${clientDepend})
 include_directories(client PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(client PRIVATE network)
+target_link_libraries(client PRIVATE network Boost::thread)
 
 if(MSVC)  
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20")

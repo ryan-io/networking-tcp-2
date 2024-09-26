@@ -1,3 +1,4 @@
+#include <boost/thread/thread.hpp>
 #include <iostream>
 
 #include "tcpclient.h"
@@ -19,7 +20,8 @@ struct Network::TcpClient::TcpClientImpl
 	tcp::socket &GetSocket () { return Socket; }
 
 	const TcpLogging *Logger;
-	io_context Context; 
+	TcpCntPtr Connection;
+	io_context Context;
 	tcp::socket Socket;
 	tcp::resolver::results_type Endpoints;
 	streambuf Buffer;
@@ -30,7 +32,13 @@ struct Network::TcpClient::TcpClientImpl
 
 #pragma region OPEN_CLOSE
 
-void Network::TcpClient::Open () const
+boost::thread Network::TcpClient::OpenThread () const
+{
+	boost::thread t{ [&] () { OpenBlocking (); } };
+	return t;
+}
+
+void Network::TcpClient::OpenBlocking () const
 {
 	if (IsOpen ())
 	{

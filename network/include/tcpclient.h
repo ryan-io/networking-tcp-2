@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
 #include "tcpconstants.h"
 #include "tcplogging.h"
 
@@ -24,9 +25,15 @@ namespace Network
 		~TcpClient ();
 
 		/// <summary>
-		///	Opens the client for communication; sets 'IsOpen' to true.
+		///	Opens the client for communication; sets 'IsOpen' to true. Runs in a dedicated thread.
+		///	If this method is used, you must call 'Close' to stop the client.
 		/// </summary>
-		void Open () const;
+		[[nodiscard]] boost::thread OpenThread () const;
+
+		/// <summary>
+		///	Opens the client for communication; sets 'IsOpen' to true. Blocks until the client is closed.
+		/// </summary>
+		void OpenBlocking() const;
 
 		/// <summary>
 		///	Opens the client for communication; sets 'IsOpen' to false.
