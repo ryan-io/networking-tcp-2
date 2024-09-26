@@ -18,7 +18,7 @@ namespace App
 			m_tcpServer->RegisterOnJoin (onJoined);
 		}
 
-		void Post(const char* msg);
+		void Post(const char* msg) const;
 
 	private:
 		Network::TcpSrvPtr m_tcpServer;

@@ -4,11 +4,10 @@
 
 void App::Server::Start() const {
 	m_tcpServer->Start();
-	std::cout << "Server started\n";
 	m_context.run();
 }
 
-void App::Server::Post(const char* msg)
+void App::Server::Post(const char* msg) const
 {
 	m_tcpServer->Post (msg);
 }

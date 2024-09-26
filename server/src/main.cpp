@@ -19,7 +19,7 @@ int main (int charv, char **argv)
 			{
 				Network::OnJoined callback = [ ](const Network::TcpCntSharedPtr &connection)
 					{
-						std::cout << "This is a callback to Client joined: " << connection->GetName () << '\n';
+						std::cout << "Client joined: " << connection->GetName () << '\n';
 					};
 
 				server.RegisterOnJoinCallback (callback);

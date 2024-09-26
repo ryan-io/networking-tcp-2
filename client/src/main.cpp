@@ -11,6 +11,7 @@ int main (int charv, char **argv)
 		const auto client = App::Client::New (context);
 		std::cout << "Client started!\n";
 
+		// new thread for client to read/write messages
 		std::thread t{
 			[&client] ()
 			{
@@ -18,18 +19,18 @@ int main (int charv, char **argv)
 			}
 		};
 
-		int counter = 0;
 		while (true)
 		{
-			/*if (counter >= 5)
+			std::string buffer;
+			std::getline (std::cin, buffer);	//this is blocking until return key is pressed	
+
+			if (buffer == "\\q")
 			{
 				break;
-			}*/
+			}
 
-			std::this_thread::sleep_for (1000ms);	// std::chrono_literals
-			client.Post ("Hello from client!");
-			std::cout << "Client is still open\n";
-			++counter;
+			buffer += "\n";
+			client.Post (std::move (buffer));
 		}
 
 		client.Stop ();

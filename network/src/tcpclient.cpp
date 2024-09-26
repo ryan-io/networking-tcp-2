@@ -7,8 +7,9 @@
 struct Network::TcpClient::TcpClientImpl
 {
 	explicit TcpClientImpl (io_context &context, const TcpLogging *logger = nullptr)
-		: Logger (logger), Context (context), Socket (context)
+		: Logger (logger), Context (context), Socket (context) 
 	{
+		// resolver allows us to determine the address from a hostname
 		auto resolver = tcp::resolver (context);
 		Endpoints = resolver.resolve (DEFAULT_ADDRESS, DEFAULT_TCP_PORT_STR);
 	}
@@ -19,7 +20,7 @@ struct Network::TcpClient::TcpClientImpl
 	const TcpLogging *Logger;
 	io_context &Context;
 	tcp::socket Socket;
-	ip::basic_resolver_results<tcp> Endpoints;
+	tcp::resolver::results_type Endpoints;
 	streambuf Buffer{ 1024 };
 };
 
@@ -40,7 +41,7 @@ void Network::TcpClient::Open ()
 	async_connect (m_impl->GetSocket (), m_impl->Endpoints,
 		[this](const boost::system::error_code &error, const tcp::endpoint &endpoint)
 		{
-			std::cout << "Sending endpoint " << endpoint << " to " << m_impl->GetSocket ().remote_endpoint ();
+			std::cout << "Welcome " << m_impl->GetSocket ().remote_endpoint () << "!\n";
 			if (error)
 			{
 				// error handling
@@ -50,9 +51,7 @@ void Network::TcpClient::Open ()
 				return;
 			}
 
-			std::cout << "Client " << m_impl->GetSocket ().remote_endpoint () << " is now opening..." << std::endl;
 			InternalLogMsg ("Tcp client is now opened.");
-			Loop ();
 		});
 
 	m_impl->Context.run ();
@@ -116,32 +115,6 @@ void Network::TcpClient::Post (std::string &&message) const
 	}
 
 	//m_impl->Connection->Post (std::move (message));
-}
-
-auto Network::TcpClient::Loop () -> void
-{
-	//auto ptr = m_impl->Connection->shared_from_this ();
-
-	//TcpConnection::MessageHandler messagehandler = [this, ptr](const std::string &msg)
-	//	{
-	//		InternalLogMsg (msg);
-	//	};
-
-	//TcpConnection::ErrorHandler errorhandler = [this, ptr = std::weak_ptr (ptr)](const boost::system::error_code &e)
-	//	{
-	//		InternalLogErr (e.what ());
-
-	//		// if our connection is still valid AND m_connections contains it
-	//		if (const auto ptrLock = ptr.lock (); ptrLock)
-	//		{
-	//			std::stringstream ss;
-	//			ss << "Connection " << ptrLock->GetName () << " was closed.";
-	//			InternalLogMsg (ss.str ());
-	//		}
-	//	};
-
-	//InternalLogMsg ("TcpClient starting read");
-	//m_impl->Connection->Start (std::move (messagehandler), std::move (errorhandler));
 }
 
 void Network::TcpClient::SetOpen () const

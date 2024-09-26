@@ -28,7 +28,6 @@ namespace Network
 
 	private:
 		[[nodiscard]] bool IsOpen () const;
-		void Loop ();
 		void SetOpen () const;
 		void SetClose () const;
 		void AsyncRead () const;

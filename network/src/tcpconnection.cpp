@@ -14,7 +14,6 @@ struct Network::TcpConnection::TcpConnectionImpl
 	{
 		boost::system::error_code ec;
 		Name = GetName (ec);
-		std::cout << "New connection: " << Name << std::endl;
 	}
 
 	// determines the name of the connection based on the remote endpoint
@@ -64,12 +63,11 @@ void Network::TcpConnection::Start (MessageHandler &&msgHndl, ErrorHandler &&err
 
 		boost::thread readThread{ [this] ()
 		{
-			std::cout << "Starting read thread" << std::endl;
 			AsyncRead ();
 		} };
+
 		boost::thread writeThread{ [this] ()
 		{
-				std::cout << "Starting write thread" << std::endl;
 			//AsyncWrite ();
 		} };
 

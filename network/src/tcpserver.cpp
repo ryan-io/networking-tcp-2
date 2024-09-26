@@ -100,7 +100,7 @@ auto Network::TcpServer::Loop () -> void
 
 			TcpConnection::MessageHandler messagehandler = [this, connection](const std::string &msg)
 				{
-					std::cout << "Received message: " << msg << '\n';
+					std::cout << connection->GetName() << ": " << msg << '\n';
 				};
 
 			// std::weak_ptr for this?
