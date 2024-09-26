@@ -3,7 +3,7 @@
 #
 project(client)
 set(BOOST_ROOT C:/Development/projects-libraries/boost_1_86_0)
-file(GLOB clientDepend "src/*.cpp" "include/*.h")
+file(GLOB clientDepend "src/*.cpp" )
 find_package(Boost COMPONENTS thread REQUIRED)
 include_directories(PUBLIC ${Boost_INCLUDE_DIRS})
 add_executable(client ${clientDepend})

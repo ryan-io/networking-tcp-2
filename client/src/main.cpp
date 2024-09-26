@@ -1,21 +1,24 @@
 #include <iostream>
-
-#include "client.h"
+#include <boost/asio/io_context.hpp>
+#include "tcpclient.h"
 
 int main (int charv, char **argv)
-{
+{  
 	using namespace std::chrono_literals;
+
+
 	try
 	{
-		boost::asio::io_context context;
-		const auto client = App::Client::New (context);
+		// ideally, a new client will be created with command line argument sin 'argv'
+		// that contain the host address and port number to connect to.
+		const auto client = Network::TcpClient::New ("127.0.0.1", "117");
 		std::cout << "Client started!\n";
 
 		// new thread for client to read/write messages
 		std::thread t{
 			[&client] ()
 			{
-				client.Start ();
+				client->Open ();
 			}
 		};
 
@@ -30,10 +33,10 @@ int main (int charv, char **argv)
 			}
 
 			buffer += "\n";
-			client.Post (std::move (buffer));
+			client->Post (std::move (buffer));
 		}
 
-		client.Stop ();
+		client->Close ();
 		t.join ();
 	}
 	catch (const std::exception &e)

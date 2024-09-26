@@ -11,7 +11,7 @@ namespace Network
 	class TcpConnection : public std::enable_shared_from_this<TcpConnection>
 	{
 	public:
-		// requires a socket to communicate between the server and client
+		// requires a Socket to communicate between the server and client
 		using TcpCntPtr = std::unique_ptr<TcpConnection>;
 		using TcpCntPtrShrd = std::shared_ptr<TcpConnection>;
 		using MsgHandler = std::function<void (const std::string &)>;
@@ -19,10 +19,10 @@ namespace Network
 
 		// creates a new tcp connection from he provided boost::asio::io_context
 		// returns a unique_ptr that can easily be converted to a shared_ptr
-		// 'socket' is a rvalue reference to a tcp::socket and should be passed with std::move
+		// 'Socket' is a rvalue reference to a tcp::Socket and should be passed with std::move
 		static TcpCntPtr New (tcp::socket &&, int);
 
-		// returns a constant reference to the connection's socket
+		// returns a constant reference to the connection's Socket
 		tcp::socket &GetSocket () const;
 
 		// returns the derived name for the connection
@@ -42,9 +42,9 @@ namespace Network
 		struct TcpConnectionImpl;
 		std::unique_ptr<TcpConnectionImpl> m_impl;
 
-		// initializes the TcpConnection with the provided socket and buffer size
-		// socket should be passed as a rvalue reference
-		// default buffer size is 1024 bytes
+		// initializes the TcpConnection with the provided Socket and Buffer size
+		// Socket should be passed as a rvalue reference
+		// default Buffer size is 1024 bytes
 		explicit TcpConnection (tcp::socket &&socket, int bufferSize = 1024);
 
 		// waits for a new message from a client

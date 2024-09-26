@@ -1,33 +1,34 @@
-#include "tcpclient.h"
-
 #include <iostream>
+
+#include "tcpclient.h"
 #include "tcpconnection.h"
 #include "tcplogging.h"
 
+#pragma region PIMPL_IDIOM
+
 struct Network::TcpClient::TcpClientImpl
 {
-	explicit TcpClientImpl (io_context &context, const TcpLogging *logger = nullptr)
-		: Logger (logger), Context (context), Socket (context)
+	explicit TcpClientImpl (const string_view host, const string_view port, const int bufferSize, const TcpLogging *logger = nullptr)
+		: Logger (logger), Context (io_context{}), Socket (Context), Buffer (bufferSize), IsOpen (false)
 	{
 		// resolver allows us to determine the address from a hostname
-		auto resolver = tcp::resolver (context);
-		Endpoints = resolver.resolve (DEFAULT_ADDRESS, DEFAULT_TCP_PORT_STR);
+		auto resolver = tcp::resolver (Context);
+		Endpoints = resolver.resolve (host, port);
 	}
 
 	tcp::socket &GetSocket () { return Socket; }
 
-	bool IsOpen = false;
 	const TcpLogging *Logger;
-	io_context &Context;
+	io_context Context; 
 	tcp::socket Socket;
 	tcp::resolver::results_type Endpoints;
-	streambuf Buffer{ 1024 };
+	streambuf Buffer;
+	bool IsOpen;
 };
 
-Network::TcpClientPtr Network::TcpClient::New (io_context &context)
-{
-	return TcpClientPtr (new TcpClient (context));
-}
+#pragma endregion
+
+#pragma region OPEN_CLOSE
 
 void Network::TcpClient::Open () const
 {
@@ -57,32 +58,6 @@ void Network::TcpClient::Open () const
 	m_impl->Context.run ();
 }
 
-void Network::TcpClient::InternalLogMsg (const std::string &msg) const
-{
-	InternalLogMsg (msg.c_str ());
-}
-
-void Network::TcpClient::InternalLogMsg (const char *msg) const
-{
-	if (m_impl->Logger)
-	{
-		m_impl->Logger->LogErr (msg);
-	}
-}
-
-void Network::TcpClient::InternalLogErr (const std::string &err) const
-{
-	InternalLogErr (err.c_str ());
-}
-
-void Network::TcpClient::InternalLogErr (const char *err) const
-{
-	if (m_impl->Logger)
-	{
-		m_impl->Logger->LogErr (err);
-	}
-}
-
 void Network::TcpClient::Close () const
 {
 	if (!IsOpen ())
@@ -104,7 +79,10 @@ void Network::TcpClient::Close () const
 	}
 }
 
-// takes an rvalue reference to a string and queries a Tcp connection to post it
+#pragma endregion
+
+#pragma region WRITE
+
 void Network::TcpClient::Post (std::string &&message) const
 {
 	if (!IsOpen ())
@@ -131,6 +109,52 @@ void Network::TcpClient::Post (std::string &&message) const
 		});
 }
 
+void Network::TcpClient::AsyncWrite ()
+{ }
+
+#pragma endregion
+
+#pragma region READ
+
+void Network::TcpClient::AsyncRead () const
+{
+	InternalLogMsg ("TcpClient read!");
+}
+
+#pragma endregion
+
+#pragma region LOGGING
+
+void Network::TcpClient::InternalLogMsg (const std::string &msg) const
+{
+	InternalLogMsg (msg.c_str ());
+}
+
+void Network::TcpClient::InternalLogMsg (const char *msg) const
+{
+	if (m_impl->Logger)
+	{
+		m_impl->Logger->LogErr (msg);
+	}
+}
+
+void Network::TcpClient::InternalLogErr (const std::string &err) const
+{
+	InternalLogErr (err.c_str ());
+}
+
+void Network::TcpClient::InternalLogErr (const char *err) const
+{
+	if (m_impl->Logger)
+	{
+		m_impl->Logger->LogErr (err);
+	}
+}
+
+#pragma endregion
+
+#pragma region HELPERS
+
 void Network::TcpClient::SetOpen () const
 {
 	m_impl->IsOpen = true;
@@ -146,16 +170,17 @@ bool Network::TcpClient::IsOpen () const
 	return m_impl->IsOpen;
 }
 
-void Network::TcpClient::AsyncRead () const
+#pragma endregion
+
+#pragma region CONSTRUCTOR_DESTRUCTOR
+
+Network::TcpClientPtr Network::TcpClient::New (const string_view host, const string_view port, const int bufferSize, const TcpLogging *logger)
 {
-	InternalLogMsg ("TcpClient read!");
+	return TcpClientPtr (new TcpClient (host, port, bufferSize, logger));
 }
 
-void Network::TcpClient::AsyncWrite ()
-{ }
-
-Network::TcpClient::TcpClient (io_context &context, const TcpLogging *logging)
-	: m_impl (std::make_unique<TcpClientImpl> (context)) { }
+Network::TcpClient::TcpClient (const string_view host, const string_view port, const int bufferSize, const TcpLogging *logger)
+	: m_impl (std::make_unique<TcpClientImpl> (host, port, bufferSize, logger)) { }
 
 Network::TcpClient::~TcpClient ()
 {
@@ -164,3 +189,5 @@ Network::TcpClient::~TcpClient ()
 	m_impl->Socket.close (ec);
 	m_impl->Context.stop ();
 }
+
+#pragma endregion
