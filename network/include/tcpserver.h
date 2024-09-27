@@ -20,61 +20,117 @@
 
 namespace Network
 {
-	using OnJoined = std::function<void (const TcpCntSharedPtr &)>;
-	using OnLeft = std::function<void (const TcpCntSharedPtr &)>;
+#pragma region TYPEDEFS
+
+	/// <summary>
+	///	A callback that is emitted when a new client joins the server
+	/// </summary>
+	using OnJoin = std::function<void (const TcpCntSharedPtr &)>;
+
+	/// <summary>
+	///	A callback that is emitted when a new client joins the server
+	/// </summary>
+	using OnLeave = std::function<void (const TcpCntSharedPtr &)>;
 
 	using namespace boost::asio;
 	using ip::tcp;
 
-	// requires an acceptor to accept incoming connections
-	// requires an io_context to handle asynchronous operations
+#pragma endregion
+
+	// An abstraction for handling communication between two entities (server and client)
 	class TcpServer
 	{
 	public:
-		// static factory method to create a new TcpServer object
-		// requires the consumer to provide a boost io_context
+	#pragma region FUNCTIONS
+		/// <summary>
+		/// Static factory method for creating a new TcpServer object.
+		/// </summary>
 		static TcpSrvPtr New (io_context &context);
 
-		// enables the server to start accepting connections
-		// if this method is not invoked, no connections will be accepted
-		//		and the server will not be able to broadcast messages
+		/// <summary>
+		/// Starts the server for communication; sets 'IsRunning' to true.
+		/// </summary>
 		void Start ();
 
-		void Stop() const;
+		/// <summary>
+		/// Stops the server for communication; sets 'IsRunning' to false.
+		/// </summary>
+		void Stop () const;
 
-		// register a callback for when a client joins
-		void RegisterOnJoin (const OnJoined &onJoined) const;
-		void Post(std::string&& msg) const;
+		/// <summary>
+		/// Registers to the 'OnJoin' callback for when a new client joins the server. 
+		/// </summary>
+		void RegisterOnJoin (const OnJoin &) const;
 
-#pragma region Construction/Destruction
+			/// <summary>
+		/// Registers to the 'OnJoin' callback for when a new client joins the server. 
+		/// </summary>
+		void RegisterOnLeave (const OnLeave &) const;
+
+		/// <summary>
+		/// Send a message to all connected clients.
+		/// </summary>
+		void Post (std::string &&msg) const;
 
 		TcpServer (const TcpServer &) = delete;				// delete copy constructor
 		TcpServer (TcpServer &&) = delete;					// delete move constructor
 		TcpServer &operator=(const TcpServer &) = delete;	// delete copy assignment
 		TcpServer &operator=(TcpServer &&) = delete;		// delete move assignment
 
-		// only declare destructor here, implementation is in the cpp file
-		// this is to allow PIMPL idiom to work with unique_ptr and invocation of tcp server destructor
+		//// <summary>
+		/// Default destructor.
+		/// </summary>
 		~TcpServer ();
 
 	#pragma endregion
 
 	private:
+	#pragma region MEMBER_VARIABLES
+		/// <summary>
+		/// PIMPL idiom for handling the implementation details of TcpServer.
+		/// </summary>
 		struct TcpServerImpl;	// forward declaration of the implementation (PIMPL)
+
+		/// <summary>
+		/// Unique pointer to PIMPL implementation.
+		/// </summary>
 		std::unique_ptr<TcpServerImpl> m_impl;	// pointer to the implementation
 
-		// the core function that processes connection loop
+	#pragma endregion
+
+	#pragma region FUNCTIONS
+		/// <summary>
+		/// Core async read/write loop for handling communication.
+		/// </summary>
 		void Loop ();
 
+		/// <summary>
+		/// Invokes all subscribers when a client joins a server
+		/// </summary>
 		void RelayOnJoin (const TcpCntSharedPtr &) const;
+
+		/// <summary>
+		/// Invokes all subscribers when a client leaves a server
+		/// </summary>
 		void RelayOnLeft (const TcpCntSharedPtr &) const;
 
-		// initializes the TcpServer with the provided io_context with the default V4 IP version and port 117
-		// we need an acceptor and a context
-		// the acceptor requires the context and a new tcp::endpoint with IP version and port
+		/// <summary>
+		/// Default constructor; initializes the TcpServer object.
+		/// </summary>
 		explicit TcpServer (io_context &context);
 
-		// static method for wrapping std::cout
-		static void Log (const char *message);
+		/// <summary>
+		///	Checks if a logger is provided and logs the message.
+		/// </summary>
+		void InternalLogMsg (const std::string &) const;
+		void InternalLogMsg (const char *) const;
+
+		/// <summary>
+		///	Checks if a logger is provided and logs the message as an error.
+		/// </summary>
+		void InternalLogErr (const std::string &) const;
+		void InternalLogErr (const char *) const;
+
+	#pragma endregion
 	};
 }

@@ -20,7 +20,6 @@ struct Network::TcpClient::TcpClientImpl
 	tcp::socket &GetSocket () { return Socket; }
 
 	const TcpLogging *Logger;
-	TcpCntPtr Connection;
 	io_context Context;
 	tcp::socket Socket;
 	tcp::resolver::results_type Endpoints;

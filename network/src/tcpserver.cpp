@@ -1,7 +1,6 @@
-#include "tcpserver.h"
 #include <iostream>
 #include <unordered_set>
-
+#include "tcpserver.h"
 #include "tcpconnection.h"
 #include "tcpconstants.h"
 
@@ -31,8 +30,8 @@ struct Network::TcpServer::TcpServerImpl
 	/*
 	 * Callbacks for when a client joins, leaves, broadcasts a message, or receives a message
 	 */
-	std::vector<OnJoined> OnJoined;
-	std::vector<OnLeft> OnLeft;
+	std::vector<OnJoin> OnJoined;
+	std::vector<OnLeave> OnLeft;
 
 	streambuf Buffer{ DEFAULT_BUFFER_SIZE };
 };
@@ -47,22 +46,26 @@ void Network::TcpServer::Start ()
 // create a new TcpConnection object
 // tell the acceptor to accept new connections
 
-	Log ("Starting Tcp server...");
+	InternalLogMsg ("Starting Tcp server...");
 	Loop ();
-	Log ("Tcp server now accepting connections");
+	InternalLogMsg("Tcp server now accepting connections");
 	m_impl->Context.run ();
 }
 
 void Network::TcpServer::Stop () const
 {
-	Log ("Stopping Tcp server...");
+	InternalLogMsg("Stopping Tcp server...");
 	m_impl->Context.stop ();
 
 }
 
-void Network::TcpServer::RegisterOnJoin (const OnJoined &onJoined) const
+void Network::TcpServer::RegisterOnJoin (const OnJoin &onJoined) const
 {
 	m_impl->OnJoined.push_back (onJoined);
+}
+
+void Network::TcpServer::RegisterOnLeave(const OnLeave&) const
+{
 }
 
 // broadcast a message to all connected clients
@@ -160,4 +163,18 @@ Network::TcpServer::~TcpServer () = default;
 Network::TcpServer::TcpServer (io_context &context) :
 	m_impl (std::make_unique<TcpServerImpl> (context)) { }
 
-void Network::TcpServer::Log (const char *message) { std::cout << message << '\n'; }
+void Network::TcpServer::InternalLogMsg(const std::string&) const
+{
+}
+
+void Network::TcpServer::InternalLogMsg(const char*) const
+{
+}
+
+void Network::TcpServer::InternalLogErr(const std::string&) const
+{
+}
+
+void Network::TcpServer::InternalLogErr(const char*) const
+{
+}

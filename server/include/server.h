@@ -14,7 +14,7 @@ namespace App
 		void Start () const;
 		void Stop () const;
 
-		void RegisterOnJoinCallback (const Network::OnJoined &onJoined) const
+		void RegisterOnJoinCallback (const Network::OnJoin &onJoined) const
 		{
 			m_tcpServer->RegisterOnJoin (onJoined);
 		}

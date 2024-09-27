@@ -16,7 +16,7 @@ int main (int charv, char **argv)
 
 		std::thread t ([&]
 			{
-				const Network::OnJoined callback = [ ](const Network::TcpCntSharedPtr &connection)
+				const Network::OnJoin callback = [ ](const Network::TcpCntSharedPtr &connection)
 					{
 						std::cout << "Client joined: " << connection->GetName () << '\n';
 					};
