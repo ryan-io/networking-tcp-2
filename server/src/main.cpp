@@ -1,6 +1,6 @@
 #include <iostream>
-#include "server.h"
 #include "tcpconnection.h"
+#include "tcpserver.h"
 
 int main (int charv, char **argv)
 {
@@ -8,22 +8,17 @@ int main (int charv, char **argv)
 
 	try
 	{
-		constexpr int DELAY_START = 2;
 		std::cout << "Creating server...\n";
-		io_context context;
-		const App::Server server{ context };
-		std::this_thread::sleep_for (std::chrono::seconds (DELAY_START));
 
-		std::thread t ([&]
+		const auto server = Network::TcpServer::New (117, 1024);
+		const Network::OnJoin callback = [ ](const Network::TcpCntSharedPtr &connection)
 			{
-				const Network::OnJoin callback = [ ](const Network::TcpCntSharedPtr &connection)
-					{
-						std::cout << "Client joined: " << connection->GetName () << '\n';
-					};
+				std::cout << "Client joined: " << connection->GetName () << '\n';
+			};
 
-				server.RegisterOnJoinCallback (callback);
-				server.Start ();
-			});
+		server->RegisterOnJoin (callback);
+
+		auto t = server->StartThread ();
 
 		while (true)
 		{
@@ -36,10 +31,10 @@ int main (int charv, char **argv)
 			}
 
 			buffer += "\n";
-			server.Post (std::move(buffer));
+			server->Post (std::move (buffer));
 		}
 
-		server.Start ();
+		server->Stop ();
 		t.join ();
 	}
 	catch (std::exception &e)

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
+
 #include "tcpconstants.h"
+#include "tcplogging.h"
 
 /*
  * Socket is merely one endpoint of a two-way communication link. It represents a
@@ -45,12 +48,20 @@ namespace Network
 		/// <summary>
 		/// Static factory method for creating a new TcpServer object.
 		/// </summary>
-		static TcpSrvPtr New (io_context &context);
+		static TcpSrvPtr New (unsigned short, int, const TcpLogging *logger = nullptr);
 
 		/// <summary>
 		/// Starts the server for communication; sets 'IsRunning' to true.
+		///	Returns a thread object for the consumer to handle.
 		/// </summary>
-		void Start ();
+		boost::thread StartThread ();
+
+		/// <summary>
+		/// Starts the server for communication; sets 'IsRunning' to true. This is a blocking call
+		///	and run on the current thread.
+		///	Returns a thread object for the consumer to handle.
+		/// </summary>
+		void StartBlocking ();
 
 		/// <summary>
 		/// Stops the server for communication; sets 'IsRunning' to false.
@@ -117,7 +128,7 @@ namespace Network
 		/// <summary>
 		/// Default constructor; initializes the TcpServer object.
 		/// </summary>
-		explicit TcpServer (io_context &context);
+		explicit TcpServer (unsigned short, int, const TcpLogging *logger = nullptr);
 
 		/// <summary>
 		///	Checks if a logger is provided and logs the message.

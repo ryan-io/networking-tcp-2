@@ -5,7 +5,7 @@ project(network)
 set(Boost_DEBUG 1)  
 # project commands
 include_directories(network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include) # use '${CMAKE_CURRENT_SOURCE_DIR}' for library headers
-
+ 
 file(GLOB networkSrc "src/*.cpp")
  
 if(MSVC)

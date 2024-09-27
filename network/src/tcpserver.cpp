@@ -3,21 +3,26 @@
 #include "tcpserver.h"
 #include "tcpconnection.h"
 #include "tcpconstants.h"
+#include "tcplogging.h"
+
+#pragma region PIMPL_IDIOM
 
 struct Network::TcpServer::TcpServerImpl
 {
 	static constexpr int DEFAULT_BUFFER_SIZE = 1024;
 
-	explicit TcpServer::TcpServerImpl (io_context &context) :
-		Context (context),
-		Acceptor (context, tcp::endpoint (tcp::v4 (), DEFAULT_TCP_PORT))
+	explicit TcpServer::TcpServerImpl (const unsigned short port, const int bufferSize, const TcpLogging *logger) :
+		Context (io_context{}),
+		Acceptor (Context, tcp::endpoint (tcp::v4 (), port)),
+		Buffer (bufferSize),
+		Logger (logger)
 	{ }
 
-	// data structure for holding all active connections
+	// data structure fors holding all active connections
 	std::unordered_set<TcpCntSharedPtr> Connections{};
 
 	// provides core I/O functionality
-	io_context &Context;
+	io_context Context;
 
 	// accepts client connections to this server object
 	tcp::acceptor Acceptor;
@@ -34,39 +39,102 @@ struct Network::TcpServer::TcpServerImpl
 	std::vector<OnLeave> OnLeft;
 
 	streambuf Buffer{ DEFAULT_BUFFER_SIZE };
+
+	// optional logger
+	const TcpLogging *Logger;
 };
 
-Network::TcpSrvPtr Network::TcpServer::New (io_context &context)
+#pragma endregion
+
+#pragma region CONSTRUCTOR_DESTRUCTOR
+
+Network::TcpSrvPtr Network::TcpServer::New (const unsigned short port, const int bufferSize, const TcpLogging *logger)
 {
-	return TcpSrvPtr (new TcpServer (context));	// cannot use std::make_shared here
+	return TcpSrvPtr (new TcpServer (port, bufferSize, logger));	// cannot use std::make_shared here
 }
 
-void Network::TcpServer::Start ()
+Network::TcpServer::~TcpServer () = default;
+
+Network::TcpServer::TcpServer (const unsigned short port, const int bufferSize, const TcpLogging *logger)
+	: m_impl (std::make_unique<TcpServerImpl> (port, bufferSize, logger)) { }
+
+#pragma endregion
+
+#pragma region START_STOP
+
+/// <summary>
+/// Starts the Tcp server. This method also invokes io_context::run().
+/// </summary>
+boost::thread Network::TcpServer::StartThread ()
 {
 // create a new TcpConnection object
 // tell the acceptor to accept new connections
 
+	boost::thread t{ [&] () { StartBlocking (); } };
+	return t;
+}
+
+void Network::TcpServer::StartBlocking ()
+{
 	InternalLogMsg ("Starting Tcp server...");
 	Loop ();
-	InternalLogMsg("Tcp server now accepting connections");
+	InternalLogMsg ("Tcp server now accepting connections");
+
 	m_impl->Context.run ();
 }
 
 void Network::TcpServer::Stop () const
 {
-	InternalLogMsg("Stopping Tcp server...");
+	InternalLogMsg ("Stopping Tcp server...");
 	m_impl->Context.stop ();
 
 }
 
-void Network::TcpServer::RegisterOnJoin (const OnJoin &onJoined) const
+#pragma endregion
+
+#pragma region CALLBACKS
+
+void Network::TcpServer::RegisterOnJoin (const OnJoin &onJoin) const
 {
-	m_impl->OnJoined.push_back (onJoined);
+	m_impl->OnJoined.push_back (onJoin);
 }
 
-void Network::TcpServer::RegisterOnLeave(const OnLeave&) const
+void Network::TcpServer::RegisterOnLeave (const OnLeave &onLeave) const
 {
+	m_impl->OnLeft.push_back (onLeave);
 }
+
+// invokes all onJoined callbacks
+void Network::TcpServer::RelayOnJoin (const TcpCntSharedPtr &connection) const
+{
+	if (m_impl->OnJoined.empty ())
+	{
+		return;
+	}
+
+	for (auto &callback : m_impl->OnJoined)
+	{
+		callback (connection);
+	}
+}
+
+// invokes all onLeft callbacks
+void Network::TcpServer::RelayOnLeft (const TcpCntSharedPtr &connection) const
+{
+	if (m_impl->OnLeft.empty ())
+	{
+		return;
+	}
+
+	for (auto &callback : m_impl->OnLeft)
+	{
+		callback (connection);
+	}
+}
+
+#pragma endregion
+
+#pragma region POST
 
 // broadcast a message to all connected clients
 // should be invoked with a rvalue (std::move)
@@ -82,15 +150,16 @@ void Network::TcpServer::Post (std::string &&msg) const
 	}
 }
 
+#pragma endregion
+
+#pragma region LOOP
+
 auto Network::TcpServer::Loop () -> void
 {
 	// the intention here is the socket will be std::move'd into the connection object
 	m_impl->Socket.emplace (m_impl->Context);		// this is the socket we will be waiting on
 	// a new connection should be created within the acceptor async_accept block
 	//		to ensure the connection remains in scope
-
-	// we cast this to a shared_pointer because this connection can/will be cached
-	// at this point, member variable m_socket of 'connection' is a valid socket
 
 	m_impl->Acceptor.async_accept (*(m_impl->Socket),
 		[this](const boost::system::error_code &ec)
@@ -130,51 +199,35 @@ auto Network::TcpServer::Loop () -> void
 		});
 }
 
-// invokes all onJoined callbacks
-void Network::TcpServer::RelayOnJoin (const TcpCntSharedPtr &connection) const
-{
-	if (m_impl->OnJoined.empty ())
-	{
-		return;
-	}
 
-	for (auto &callback : m_impl->OnJoined)
-	{
-		callback (connection);
-	}
+#pragma endregion
+
+#pragma region LOGGING
+
+void Network::TcpServer::InternalLogMsg (const std::string &msg) const
+{
+	InternalLogMsg (msg.c_str ());
 }
 
-// invokes all onLeft callbacks
-void Network::TcpServer::RelayOnLeft (const TcpCntSharedPtr &connection) const
+void Network::TcpServer::InternalLogMsg (const char *msg) const
 {
-	if (m_impl->OnLeft.empty ())
+	if (m_impl->Logger)
 	{
-		return;
-	}
-
-	for (auto &callback : m_impl->OnLeft)
-	{
-		callback (connection);
+		m_impl->Logger->LogErr (msg);
 	}
 }
 
-Network::TcpServer::~TcpServer () = default;
-
-Network::TcpServer::TcpServer (io_context &context) :
-	m_impl (std::make_unique<TcpServerImpl> (context)) { }
-
-void Network::TcpServer::InternalLogMsg(const std::string&) const
+void Network::TcpServer::InternalLogErr (const std::string &err) const
 {
+	InternalLogMsg (err.c_str ());
 }
 
-void Network::TcpServer::InternalLogMsg(const char*) const
+void Network::TcpServer::InternalLogErr (const char *err) const
 {
+	if (m_impl->Logger)
+	{
+		m_impl->Logger->LogErr (err);
+	}
 }
 
-void Network::TcpServer::InternalLogErr(const std::string&) const
-{
-}
-
-void Network::TcpServer::InternalLogErr(const char*) const
-{
-}
+#pragma endregion
