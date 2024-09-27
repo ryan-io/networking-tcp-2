@@ -5,14 +5,14 @@ if (POLICY CMP0141)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
 endif()
 
-project ("network_exe")
+project ("network_exe")  
 
 add_subdirectory ("network")
 add_subdirectory ("server")
-add_subdirectory ("client") 
+add_subdirectory ("client")   
 
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20")
-else()
+else()  
 	set(CMAKE_CXX_STANDARD 20)
 endif(MSVC)

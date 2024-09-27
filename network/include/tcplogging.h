@@ -1,4 +1,5 @@
 #pragma once
+#include <ostream>
 
 namespace Network
 {
@@ -6,15 +7,15 @@ namespace Network
 	class TcpLogging
 	{
 	public:
-		virtual void LogMsg (char *) const = 0;
-		virtual void LogErr (char *) const = 0;
-		virtual void LogMsg (const std::string &msg) const = 0;
-		virtual void LogErr (const std::string &msg) const = 0;
+		virtual void LogMsg (char *) const;
+		virtual void LogErr (char *) const;
+		virtual void LogMsg (const std::string &msg) const;
+		virtual void LogErr (const std::string &msg) const;
 		virtual ~TcpLogging ();
 
 		explicit TcpLogging (std::ostream *ostream) : m_ostream (ostream) { }
 
-		TcpLogging (const TcpLogging &) = delete;				
+		TcpLogging (const TcpLogging &) = delete;
 		TcpLogging (TcpLogging &&) = delete;					// allow move semantics?
 		TcpLogging &operator= (const TcpLogging &) = delete;
 		TcpLogging &operator= (TcpLogging &&) = delete;			// allow move semantics?

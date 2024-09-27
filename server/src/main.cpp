@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include "tcpconnection.h"
 #include "tcpserver.h"
 
@@ -10,7 +11,9 @@ int main (int charv, char **argv)
 	{
 		std::cout << "Creating server...\n";
 
-		const auto server = Network::TcpServer::New (117, 1024);
+		const auto log = Network::TcpLogging{&std::cout};
+		const auto server = Network::TcpServer::New (117, 1024, &log);
+
 		const Network::OnJoin callback = [ ](const Network::TcpCntSharedPtr &connection)
 			{
 				std::cout << "Client joined: " << connection->GetName () << '\n';
