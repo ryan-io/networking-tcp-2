@@ -134,13 +134,13 @@ namespace Network
 		///	Checks if a logger is provided and logs the message.
 		/// </summary>
 		void InternalLogMsg (const std::string &) const;
-		void InternalLogMsg (const char *) const;
+		void InternalLogMsg (const char *, size_t) const;
 
 		/// <summary>
 		///	Checks if a logger is provided and logs the message as an error.
 		/// </summary>
 		void InternalLogErr (const std::string &) const;
-		void InternalLogErr (const char *) const;
+		void InternalLogErr (const char *, size_t) const;
 
 	#pragma endregion
 	};

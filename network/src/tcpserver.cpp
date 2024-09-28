@@ -206,11 +206,16 @@ auto Network::TcpServer::Loop () -> void
 
 void Network::TcpServer::InternalLogMsg (const std::string &msg) const
 {
-	InternalLogMsg (msg.c_str ());
+	InternalLogMsg (msg.c_str (), msg.size());
 }
 
-void Network::TcpServer::InternalLogMsg (const char *msg) const
+void Network::TcpServer::InternalLogMsg (const char *msg, const size_t msgSize) const
 {
+	if (msgSize < 1 || (msgSize == 1 && msg[0] == '\n'))
+	{
+		return;
+	}
+
 	if (m_impl->Logger)
 	{
 		m_impl->Logger->LogErr (msg);
@@ -219,11 +224,16 @@ void Network::TcpServer::InternalLogMsg (const char *msg) const
 
 void Network::TcpServer::InternalLogErr (const std::string &err) const
 {
-	InternalLogMsg (err.c_str ());
+	InternalLogErr (err.c_str (), err.size());
 }
 
-void Network::TcpServer::InternalLogErr (const char *err) const
+void Network::TcpServer::InternalLogErr (const char *err, const size_t msgSize) const
 {
+	if (msgSize < 1 || (msgSize == 1 && err[0] == '\n'))
+	{
+		return;
+	}
+
 	if (m_impl->Logger)
 	{
 		m_impl->Logger->LogErr (err);

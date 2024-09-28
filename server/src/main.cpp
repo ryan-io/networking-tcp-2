@@ -2,6 +2,9 @@
 
 #include "tcpconnection.h"
 #include "tcpserver.h"
+#include "getio.h"
+
+Network::TcpSrvPtr server;
 
 int main (int charv, char **argv)
 {
@@ -11,8 +14,8 @@ int main (int charv, char **argv)
 	{
 		std::cout << "Creating server...\n";
 
-		const auto log = Network::TcpLogging{&std::cout};
-		const auto server = Network::TcpServer::New (117, 1024, &log);
+		const auto log = Network::TcpLogging{ &std::cout };
+		server = Network::TcpServer::New (117, 1024, &log);
 
 		const Network::OnJoin callback = [ ](const Network::TcpCntSharedPtr &connection)
 			{
@@ -23,19 +26,7 @@ int main (int charv, char **argv)
 
 		auto t = server->StartThread ();
 
-		while (true)
-		{
-			std::string buffer;
-			std::getline (std::cin, buffer);	//this is blocking until return key is pressed	
-
-			if (buffer == "\\q")
-			{
-				break;
-			}
-
-			buffer += "\n";
-			server->Post (std::move (buffer));
-		}
+		Network::GetInput ([ ](std::string &in) { server->Post (std::move (in)); });	// get input from user
 
 		server->Stop ();
 		t.join ();

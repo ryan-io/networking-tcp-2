@@ -1,6 +1,9 @@
 #include <iostream>
 #include <boost/asio/io_context.hpp>
 #include "tcpclient.h"
+#include "getio.h"
+
+Network::TcpClientPtr client;
 
 int main (int charv, char **argv)
 {
@@ -14,27 +17,13 @@ int main (int charv, char **argv)
 
 		const auto log = Network::TcpLogging{ &std::cout };
 
-		const auto client = Network::TcpClient::New ("127.0.0.1", "117", 1024, &log);
+		client = Network::TcpClient::New ("127.0.0.1", "117", 1024, &log);
 
 		std::cout << "Client started!\n";
 
 		auto clientThread = client->OpenThread ();
 
-		while (true)
-		{
-			std::string buffer;
-			std::getline (std::cin, buffer);	//this is blocking until return key is pressed	
-
-			if (buffer == "\\q")
-			{
-				break;
-			}
-
-			buffer += "\n";
-			client->Post (std::move (buffer));	// callback
-			buffer.clear ();
-			std::cin.clear ();
-		}
+		Network::GetInput ([ ](std::string &in) { client->Post (std::move (in)); });	// get input from user
 
 		client->Close ();
 		clientThread.join ();

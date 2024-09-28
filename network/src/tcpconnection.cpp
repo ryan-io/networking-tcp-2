@@ -66,13 +66,7 @@ void Network::TcpConnection::Start (MsgHandler &&msgHndl, ErrHandler &&errHandl)
 			AsyncRead ();
 		} };
 
-		boost::thread writeThread{ [this] ()
-		{
-			//AsyncWrite ();
-		} };
-
 		readThread.join ();
-		writeThread.join ();
 	}
 	catch (std::exception &)
 	{
@@ -159,7 +153,7 @@ void Network::TcpConnection::OnRead (boost::system::error_code &e, size_t transf
 	// logging
 	if (m_impl->MessageHandler)
 	{
-		BuildAndSendMessage (message.str(), transferred);
+		BuildAndSendMessage (message.str (), transferred);
 	}
 
 	// kick the loop back off
